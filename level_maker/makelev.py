@@ -28,7 +28,7 @@ def make_levels(dps, purmax, regions, print_out=False):
                 region_current += 1
                 dpinc_current = regions[region_current][1]
                 dpmax_current = regions[region_current][2]
-                print(f"Moving into region: {region_current} with increment {dpinc_current} and top {dpmax_current}")
+                print(f"Moving into region: {region_current} with increment from {dpinc_current} to {dpmax_current}")
 
     ktop = len(outint)-1  # subtract 1 b/c zero-based python indexing
     # convert lists to Numpy ndarray for easier calculations:
@@ -49,11 +49,12 @@ def make_levels(dps, purmax, regions, print_out=False):
     # interface outint[k]
     #                    outmid[k] outdp[k]
     # interface outint[k+1]
-    print("int, mid, dp, dlnp, z")
-    for k in np.arange(ktop, -1, -1):
-        if k < len(outmid):
-            print(f"        {outmid[k]:11.5f} , {outdp[k]:11.5f} , {outdln[k]:11.5f}, {outz[k]:5.3f}")
-        print(f"[k={k}] {ktop-k+1} {outint[k]}")
+    if print_out:
+        print("int, mid, dp, dlnp, z")
+        for k in np.arange(ktop, -1, -1):
+            if k < len(outmid):
+                print(f"        {outmid[k]:11.5f} , {outdp[k]:11.5f} , {outdln[k]:11.5f}, {outz[k]:5.3f}")
+            print(f"[k={k}] {ktop-k+1} {outint[k]}")
     # INFO: kmax is the number of midpoint levels
     #       ktop is the number of interface levels
     #       kpur is the lowest (in height) interface level that is pure pressure
@@ -100,7 +101,7 @@ def make_levels(dps, purmax, regions, print_out=False):
         print("ilev , aisig , bisig, ai+bi")
         for i, ais in enumerate(aisig):
             print(f"{i:02d} , {ais:1.5E} , {bisig[i]:1.5E} , {aipbi[i]:7.4f}")
-    return amsig, bmsig, aisig, bisig, outmid, outint
+    return amsig, bmsig, aisig, bisig, outmid[::-1], outint[::-1]
 
 
 def send_to_output(lev, am, bm, ilev, ai, bi, output_file):
@@ -142,6 +143,7 @@ def send_to_output(lev, am, bm, ilev, ai, bi, output_file):
 
     ds = xr.merge([hyam, hybm, hyai, hybi])
     ds.to_netcdf(output_file)
+
 
 if __name__ == "__main__":
     """
@@ -188,7 +190,8 @@ if __name__ == "__main__":
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("infile", help="JSON file containing input specficiation.", type=str)
-    parser.add_argument("outfile", type=str)
+    parser.add_argument("-o", "--outfile", type=str)
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     #open the file
     with open(args.infile) as f:
@@ -208,7 +211,11 @@ if __name__ == "__main__":
     assert 'regions' in data
     if args.outfile is not None:
         savefile = True
-        output_file = args.outfile    
-    am, bm, ai, bi, lev, ilev = make_levels(data['dps'], data['purmax'], data['regions'])
+        output_file = args.outfile 
+    else:
+        savefile = False
+    if args.verbose:
+        print(f"verbose mode turned on")   
+    am, bm, ai, bi, lev, ilev = make_levels(data['dps'], data['purmax'], data['regions'], print_out=args.verbose)
     if savefile:
         send_to_output(lev, am, bm, ilev, ai, bi, output_file)
