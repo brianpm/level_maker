@@ -108,10 +108,38 @@ def send_to_output(lev, am, bm, ilev, ai, bi, output_file):
         import xarray as xr
     except:
         raise ImportError("Sorry, looks like you don't have xarray available.")
-    hyam = xr.DataArray(am, dims=["lev"], coords={"lev":lev}, name="hyam")
-    hybm = xr.DataArray(am, dims=["lev"], coords={"lev":lev}, name="hybm")
-    hyai = xr.DataArray(am, dims=["lev"], coords={"lev":lev}, name="hyai")
-    hybi = xr.DataArray(am, dims=["lev"], coords={"lev":lev}, name="hybi")
+    lev_xr = xr.DataArray(lev, dims=["lev"], coords={"lev":lev}, name='lev')
+    lev_xr.attrs['long_name'] = "hybrid level at midpoints (1000*(A+B))"
+    lev_xr.attrs['units'] = 'hPa'
+    lev_xr.attrs['positive'] = 'down'
+    lev_xr.attrs['standard_name'] = "atmosphere_hybrid_sigma_pressure_coordinate"
+    lev_xr.attrs['formula_terms'] = "a: hyam b: hybm p0: P0 ps: PS"
+    lev_xr.attrs['_FillValue'] = 9.9692099683868690e+36
+
+    ilev_xr = xr.DataArray(ilev, dims=["ilev"], coords={"ilev":ilev}, name='ilev')
+    ilev_xr.attrs['long_name'] = "hybrid level at interfaces (1000*(A+B))"
+    ilev_xr.attrs['units'] = 'hPa'
+    ilev_xr.attrs['positive'] = 'down'
+    ilev_xr.attrs['standard_name'] = "atmosphere_hybrid_sigma_pressure_coordinate"
+    ilev_xr.attrs['formula_terms'] = "a: hyai b: hybi p0: P0 ps: PS"
+    ilev_xr.attrs['_FillValue'] = 9.9692099683868690e+36
+
+    hyam = xr.DataArray(am, dims=["lev"], coords={"lev":lev_xr}, name="hyam")
+    hyam.attrs['long_name'] = "hybrid A coefficient at layer midpoints"
+    hyam.attrs['_FillValue'] = 9.9692099683868690e+36
+
+    hybm = xr.DataArray(bm, dims=["lev"], coords={"lev":lev_xr}, name="hybm")
+    hybm.attrs['long_name'] = "hybrid B coefficient at layer midpoints"
+    hybm.attrs['_FillValue'] = 9.9692099683868690e+36
+    
+    hyai = xr.DataArray(ai, dims=["ilev"], coords={"ilev":ilev_xr}, name="hyai")
+    hyai.attrs['long_name'] = "hybrid A coefficient at layer interfaces"
+    hyai.attrs['_FillValue'] = 9.9692099683868690e+36
+
+    hybi = xr.DataArray(bi, dims=["ilev"], coords={"ilev":ilev_xr}, name="hybi")
+    hybi.attrs['long_name'] = "hybrid B coefficient at layer interfaces"
+    hybi.attrs['_FillValue'] = 9.9692099683868690e+36
+
     ds = xr.merge([hyam, hybm, hyai, hybi])
     ds.to_netcdf(output_file)
 
