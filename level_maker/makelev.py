@@ -2,7 +2,9 @@ import argparse
 import json
 import numpy as np
 
-def make_levels(dps, purmax, regions, print_out=False):
+
+def levels_wmson(dps, purmax, regions, print_out=False):
+    """Apply Williamson algorithm to derive levels nominal pressure."""
     # infer model top from the first entry in the last tuple:
     ptop_model = regions[-1][0]
     # start with surface layer
@@ -62,13 +64,29 @@ def make_levels(dps, purmax, regions, print_out=False):
     #       xmax is the ai+bi value at the penultimate interface
 
     # could we call it day here and move the rest of the work to another function?
-    # return outint, outdln, outdp
+    return outint, outmid, outdln, outdp
 
+
+def get_coefs(pr_int, pr_mid, purmax):
+    """Given a set of nominal pressures, derive the hybrid sigma-pressure coefficients.
+
+    INPUTS: 
+        pr_int : pressure at interfaces (hPa)
+        pr_mid : pressure at level mid-points (hPa)
+        purmax : p < purmax are pure pressure levels
+    
+    RETURNS:
+       amsig, bmsig : mid-point coefficients
+       aisig, bisig : interface coefficients
+       These coefficients are intended for the formula:
+       pressure = A * P0 + B * PS
+    """
+    ktop = len(pr_int) - 1  # subtract 1 b/c zero-based python indexing
     kmax = ktop - 1 
-    ampbm = outmid[::-1].copy()  # am plus bm, top to bottom, same as p levels
+    ampbm = pr_mid[::-1].copy()  # am plus bm, top to bottom, same as p levels
     am = ampbm.copy()            # assume all levels are pure pressure initially
     bm = np.zeros_like(am)
-    aipbi = outint[::-1].copy()  # set interfaces in same way as midpoints
+    aipbi = pr_int[::-1].copy()  # set interfaces in same way as midpoints
     ai = aipbi.copy()
     bi = np.zeros_like(ai)
     # find bottom most pure pressure interface
@@ -97,15 +115,30 @@ def make_levels(dps, purmax, regions, print_out=False):
     bisig = bi/1000.0
     amsig = am/1000.0
     bmsig = bm/1000.0
+    return amsig, bmsig, aisig, bisig #, outmid[::-1], outint[::-1]
 
+
+def print_levels(am, bm, ai, bi):
+    ampbm = am + bm
+    aipbi = ai + bi
     if print_out:
         print("lev , a , b, am+bm")
         for i, a in enumerate(am):
             print(f"{i:02d} , {a:1.5E} , {bm[i]:1.5E} , {ampbm[i]:7.4f}")
         print("ilev , aisig , bisig, ai+bi")
-        for i, ais in enumerate(aisig):
-            print(f"{i:02d} , {ais:1.5E} , {bisig[i]:1.5E} , {aipbi[i]:7.4f}")
-    return amsig, bmsig, aisig, bisig, outmid[::-1], outint[::-1]
+        for i, ais in enumerate(ai):
+            print(f"{i:02d} , {ais:1.5E} , {bi[i]:1.5E} , {aipbi[i]:7.4f}")
+
+
+
+def make_levels(dps, purmax, regions, print_out=False):
+    # TODO: insert logic for different algorithms:
+    outint, outmid, outdln, outdp = levels_wmson(dps, purmax, regions, print_out=print_out)
+    # now get the coefficients
+    hyam, hybm, hyai, hybi, lev, ilev = get_coefs(outint, outmid, purmax)
+    if print_out:
+        print_levels(hyam, hybm, hyai, hybi)
+
 
 
 def send_to_output(lev, am, bm, ilev, ai, bi, output_file):
