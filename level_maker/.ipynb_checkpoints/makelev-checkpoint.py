@@ -60,10 +60,6 @@ def make_levels(dps, purmax, regions, print_out=False):
     #       kpur is the lowest (in height) interface level that is pure pressure
     #       xmin is the ai+bi value at the kpur level
     #       xmax is the ai+bi value at the penultimate interface
-
-    # could we call it day here and move the rest of the work to another function?
-    # return outint, outdln, outdp
-
     kmax = ktop - 1 
     ampbm = outmid[::-1].copy()  # am plus bm, top to bottom, same as p levels
     am = ampbm.copy()            # assume all levels are pure pressure initially
