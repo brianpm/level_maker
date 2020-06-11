@@ -1,0 +1,11 @@
+{
+    "infile" : "/Users/brianpm/Documents/vres_temp/DANMARSH_GRID.nc",
+    "bottom_z" : 10.0,
+    "cut_pressure" : 70000.0, 
+    "add_n_levels" : 10,
+    "method" : "eriksson",
+    "method_params" : {"beta" : 1.5},
+    "scale_height" : 8,
+    "pure_p" : 90,
+    "outfile" : "/Users/brianpm/Documents/vres_temp/marsh_dz500_bleriksson.nc"
+}
