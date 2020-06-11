@@ -71,7 +71,7 @@ def get_coefs(pr_int, pr_mid, purmax):
     """Given a set of nominal pressures, derive the hybrid sigma-pressure coefficients.
 
     INPUTS: 
-        pr_int : pressure at interfaces (hPa)
+        pr_int : pressure at interfaces (hPa) [EXPECTS BOTTOM TO TOP ORDERING]
         pr_mid : pressure at level mid-points (hPa)
         purmax : p < purmax are pure pressure levels
     
