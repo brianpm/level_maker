@@ -153,7 +153,7 @@ if __name__ == "__main__":
     logging.info(f"Input levels: number of levels {len(lev_input)}, min: {lev_input.min()}, max: {lev_input.max()}")
     # ilev_input = ds_input['ilev']
 
-    # get bottom value
+    # get bottom value (of lowest mid-point)
     if 'scale_height' in data:
         h = data['scale_height']
     else:
@@ -164,6 +164,12 @@ if __name__ == "__main__":
     elif 'bottom_z' in data:    
         p_bottom = 100.0 * get_target_pressures(data['bottom_z'], H=h*1000)
         logging.debug(f"p_bottom derived as {p_bottom}")
+    
+    # specify the reference pressure:
+    if 'p_reference' in data:
+        p0 = data['p_reference']
+    else:
+        p0 = 1000.
 
     # specify the function for method:
     if data['method'].casefold() == 'eriksson':
@@ -220,6 +226,9 @@ if __name__ == "__main__":
     ilev[0] = rlev[0] + (rlev[0] - ilev[1])
     ilev.append(ilev[-1] - (ilev[-1]-rlev[-1]))
     ilev = np.array(ilev[::-1])
+    # do not allow interface levels to go beyond reference pressure:
+    ilev = np.where(ilev > p0, p0, ilev)
+    logging.info(f"Preliminary values of ilev: {ilev}")
     #
     # get the coefficients -- note that we need to provide bottom-to-top ordering
     #
