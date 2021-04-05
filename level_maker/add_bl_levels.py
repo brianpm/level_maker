@@ -82,7 +82,7 @@ def modify_lowertrop(inlev_Pa, pPa_bottom, cut_Pa, tot_points, method, **kwargs)
     *args : contains the parameters that will go into method
     
     RETURNS
-    outlev : final grid of lenght tot_points, units Pa, top-to-bottom ordering
+    outlev : final grid of length tot_points, units Pa, top-to-bottom ordering
     
     NOTES
     I use `get_target_pressures` to convert target bottom height to p_bottom
@@ -151,7 +151,10 @@ if __name__ == "__main__":
     ds_input = xr.open_dataset(data['infile'])
     lev_input = ds_input['lev'].values
     logging.info(f"Input levels: number of levels {len(lev_input)}, min: {lev_input.min()}, max: {lev_input.max()}")
-    # ilev_input = ds_input['ilev']
+
+    # if 'ilev' in ds_input:
+    #     ilev_input = ds_input['ilev']
+    #     has_ilev = True
 
     # get bottom value (of lowest mid-point)
     if 'scale_height' in data:
@@ -216,23 +219,38 @@ if __name__ == "__main__":
     # derive the interface levels
     #
     # ilev = [1000.]
-    rlev = lev[::-1]  # need to go bottom to top
+    rlev = lev[::-1]  # need to go bottom to top ("reverse lev")
+    print(f"rlev = {rlev}")
     # for k, p in enumerate(rlev):
     #     ilev.append(2*rlev[k] - ilev[k])
-    ilev = [-999999]
+    ilev = [-999999]  # initialize with a bogus lowest interface
     for k, f in enumerate(rlev[:-1]):
+        print(f"in loop - k = {k}, f = {f}")
         ilev.append(0.5*(f+rlev[k+1]))
-    # extrapolate end points of ilev:
-    ilev[0] = rlev[0] + (rlev[0] - ilev[1])
-    ilev.append(ilev[-1] - (ilev[-1]-rlev[-1]))
+
+    # end points of ilev:
+    # top interface: 
+    # if ilev is provided in input, use first value
+    if 'ilev' in ds_input:
+        logging.info(f"Use the highest interface level from the input data: {ds_input['ilev'][0]*0.01}")
+        ilev.append(0.01*ds_input['ilev'][0])
+    else:
+        # extrapolate ... take highest midpoint, rlev[-1]
+        #                 and put the next interface same distance as the lower interface from there
+        logging.info(f"Extrapolate to highest interface {rlev[-1]} - ({ilev[-1]} - {rlev[-1]})")
+        ilev.append(rlev[-1] - (ilev[-1] - rlev[-1]))
+
     ilev = np.array(ilev[::-1])
     # do not allow interface levels to go beyond reference pressure:
     ilev = np.where(ilev > p0, p0, ilev)
+    # actually, lets assume that the last ilev should be equivalent to p0
+    ilev[-1] = p0
     logging.info(f"Preliminary values of ilev: {ilev}")
     #
     # get the coefficients -- note that we need to provide bottom-to-top ordering
     #
     am, bm, ai, bi = get_coefs(ilev[::-1], lev[::-1], purp)
+    logging.debug(f"The ai values: {ai}")
     #
     # save to a simple netCDF
     #
