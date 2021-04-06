@@ -46,7 +46,7 @@ def tanh_stretch(a, b, beta=1, npoints=25):
     """Apply hyperbolic tangent transformation
        a : starting value in physical space
        b : ending value in physical space
-       beta : parameter to control how quicky transition happens (tanh(beta*x))
+       beta : parameter to control how quickly transition happens (tanh(beta*x))
        npoints : the number of points to use
        
        RETURNS
