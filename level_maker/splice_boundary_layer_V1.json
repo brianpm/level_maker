@@ -7,5 +7,5 @@
     "method_params" : {"beta" : 1.5},
     "scale_height" : 8,
     "pure_p" : 90,
-    "outfile" : "/Users/brianpm/Dropbox/Projects/vertical_resolution/GRID_48_taperstart10km_lowtop_BL10_v1.nc"
+    "outfile" : "/Users/brianpm/Dropbox/Projects/vertical_resolution/GRID_48_taperstart10km_lowtop_BL10_v2.nc"
 }

@@ -1,0 +1,11 @@
+{
+    "infile" : "/Users/brianpm/Dropbox/Projects/vertical_resolution/GRID_48_taperstart10km_lowtop.nc",
+    "bottom_z" : 50.0,
+    "cut_pressure" : 70000.0, 
+    "add_n_levels" : 10,
+    "method" : "eriksson",
+    "method_params" : {"beta" : 1.5},
+    "scale_height" : 8,
+    "pure_p" : 90,
+    "outfile" : "/Users/brianpm/Dropbox/Projects/vertical_resolution/GRID_48_taperstart10km_lowtop_BL10_v2a.nc"
+}
