@@ -1,37 +1,43 @@
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
+import argparse
 
 
-def main(f1, f2, nam1, nam2, pout):
+def main():
     """
-        f1: str, path to input file 1
-        f2: str, path to input file 2
-        nam1: str, short name for f1
-        nam2: str, short name for f2
-        pout: str, path to output plot file 
+    Parse command-line arguments and generate plots.
     """
+    parser = argparse.ArgumentParser(description="""Given two files that contain vertical level information, 
+    create a 3-panel plot showing pressures and δz (full and lower-troposphere).""")
+    parser.add_argument('f1', type=str, help='path to input file 1')
+    parser.add_argument('f2', type=str, help='path to input file 2')
+    parser.add_argument('nam1', type=str, help='short name for f1')
+    parser.add_argument('nam2', type=str, help='short name for f2')
+    parser.add_argument('pout', type=str, help='path to output plot file')
+    args = parser.parse_args()
+
     # load the grids to plot
     ds = {
-    nam1 : xr.open_dataset(f1),
-    nam2 : xr.open_dataset(f2)
+        args.nam1: xr.open_dataset(args.f1),
+        args.nam2: xr.open_dataset(args.f2)
     }
     lev = {c: ds[c]['lev'] for c in ds}
 
     # units check
     for x in lev:
         if lev[x].max() > 2000.:
-            lev[x] = lev[x]/100
+            lev[x] = lev[x] / 100
 
     ilev = {c: ds[c]['ilev'] for c in ds}
     for x in ilev:
         if ilev[x].max() > 2000.:
-            ilev[x] = ilev[x]/100
+            ilev[x] = ilev[x] / 100
 
     z = {c: get_approx_z(lev[c], H=7.0) for c in lev}
     dz = {c: np.gradient(z[c]) for c in z}
 
-    make_plot(z, dz, lev, pout)
+    make_plot(z, dz, lev, args.pout)
 
 
 def get_approx_z(p, H=8.0):
@@ -93,16 +99,6 @@ def make_plot(z, dz, lev, ofil):
     fig.savefig(f'{ofil}.png', dpi=300, bbox_inches='tight')
 
 
-if __name__ == "__main__": 
-    """Should make this a proper CLI, but for now just edit the paths below.
-    
-    Given two files that contain vertical level information, create a 3-panel plot
-    showing pressures and \delta z (full and lower-troposphere).
-    """
-    inputFileOne = "/Users/brianpm/Dropbox/Projects/vertical_resolution/GRID_48_taperstart10km_lowtop.nc"
-    nameOne = "L48"
-    inputFileTwo = "/Users/brianpm/Dropbox/Projects/vertical_resolution/GRID_48_taperstart10km_lowtop_BL10_v1.nc"
-    nameTwo = "L48+BL"
-    outputPlot = "/Users/brianpm/Dropbox/Projects/vertical_resolution/BL_LEVELS_v1"
-    main(inputFileOne, inputFileTwo, nameOne, nameTwo, outputPlot)
+if __name__ == "__main__":
+    main()
     print("FINISHED")
